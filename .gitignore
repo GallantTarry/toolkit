@@ -1,0 +1,34 @@
+# Maven / Build outputs
+target/
+out/
+build/
+*.class
+*.jar
+*.war
+*.ear
+*.exe
+
+# IDE & Editor
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+.settings/
+.classpath
+.project
+
+# OS & Logs
+.DS_Store
+Thumbs.db
+*.log
+
+# Local secrets & external tools
+.env
+.env.*
+config.properties
+*.local.properties
+app/tools/
+app/engines/
+tools/
+engines/

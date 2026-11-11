@@ -1,0 +1,205 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>me.shaoxia</groupId>
+    <artifactId>ToolKit</artifactId>
+    <version>1.9.8</version>
+
+    <properties>
+        <maven.compiler.source>21</maven.compiler.source>
+        <maven.compiler.target>21</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
+        <poi.version>5.4.0</poi.version>
+        <log4j.version>2.24.1</log4j.version>
+        <jna.version>5.14.0</jna.version>
+    </properties>
+
+    <dependencies>
+        <!-- 二维码生成 -->
+        <dependency>
+            <groupId>com.google.zxing</groupId>
+            <artifactId>core</artifactId>
+            <version>3.5.3</version>
+        </dependency>
+
+        <!-- Swing 现代主题外观 -->
+        <dependency>
+            <groupId>com.formdev</groupId>
+            <artifactId>flatlaf</artifactId>
+            <version>3.5.4</version>
+        </dependency>
+
+        <!-- PDF 解析与拆分 -->
+        <dependency>
+            <groupId>org.apache.pdfbox</groupId>
+            <artifactId>pdfbox</artifactId>
+            <version>2.0.33</version>
+        </dependency>
+        <!-- Office 文档处理 (Word / Excel / PPT) -->
+        <dependency>
+            <groupId>org.apache.poi</groupId>
+            <artifactId>poi</artifactId>
+            <version>${poi.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.poi</groupId>
+            <artifactId>poi-ooxml</artifactId>
+            <version>${poi.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.poi</groupId>
+            <artifactId>poi-scratchpad</artifactId>
+            <version>${poi.version}</version>
+        </dependency>
+
+        <!-- Log4j2 日志实现（供 Apache POI 运行时使用，避免缺失日志实现报错） -->
+        <dependency>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-api</artifactId>
+            <version>${log4j.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-core</artifactId>
+            <version>${log4j.version}</version>
+        </dependency>
+
+        <!-- MP3 音效播放 -->
+        <dependency>
+            <groupId>javazoom</groupId>
+            <artifactId>jlayer</artifactId>
+            <version>1.0.1</version>
+        </dependency>
+
+        <!-- JSON 解析与配置持久化 -->
+        <dependency>
+            <groupId>org.json</groupId>
+            <artifactId>json</artifactId>
+            <version>20240303</version>
+        </dependency>
+
+        <!-- JNA: Win32 API 硬件时钟精度锁 (winmm timeBeginPeriod/timeEndPeriod) -->
+        <dependency>
+            <groupId>net.java.dev.jna</groupId>
+            <artifactId>jna</artifactId>
+            <version>${jna.version}</version>
+        </dependency>
+        <!-- Zip4j: 流式 ZIP 归档处理库 (支持 AES-256 / ZipCrypto 加密解密与大文件流式读写) -->
+        <dependency>
+            <groupId>net.lingala.zip4j</groupId>
+            <artifactId>zip4j</artifactId>
+            <version>2.11.5</version>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <!-- Java 21 编译插件 -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.11.0</version>
+                <configuration>
+                    <compilerArgs>
+                        <arg>--add-modules</arg>
+                        <arg>jdk.compiler</arg>
+                    </compilerArgs>
+                </configuration>
+            </plugin>
+
+            <!-- Fat-JAR 打包插件（合并所有依赖） -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-shade-plugin</artifactId>
+                <version>3.5.2</version>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                        <configuration>
+                            <createDependencyReducedPom>false</createDependencyReducedPom>
+                            <filters>
+                                <!-- 过滤部分第三方依赖包内的签名文件，防止运行期报 SecurityException -->
+                                <filter>
+                                    <artifact>*:*</artifact>
+                                    <excludes>
+                                        <exclude>META-INF/*.SF</exclude>
+                                        <exclude>META-INF/*.DSA</exclude>
+                                        <exclude>META-INF/*.RSA</exclude>
+                                    </excludes>
+                                </filter>
+                            </filters>
+                            <transformers>
+                                <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
+                                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                                    <mainClass>shaoxia.MainLauncher</mainClass>
+                                    <manifestEntries>
+                                        <Multi-Release>true</Multi-Release>
+                                    </manifestEntries>
+                                </transformer>
+                            </transformers>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!-- Launch4j 生成 Windows 可执行文件 ToolKit.exe -->
+            <plugin>
+                <groupId>com.akathist.maven.plugins.launch4j</groupId>
+                <artifactId>launch4j-maven-plugin</artifactId>
+                <version>2.4.1</version>
+                <executions>
+                    <execution>
+                        <id>l4j-clui</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>launch4j</goal>
+                        </goals>
+                        <configuration>
+                            <headerType>gui</headerType>
+                            <outfile>${project.build.directory}/ToolKit.exe</outfile>
+                            <jar>${project.build.directory}/${project.artifactId}-${project.version}.jar</jar>
+                            <icon>src/main/resources/imgs/logo_app.ico</icon>
+                            <classPath>
+                                <mainClass>shaoxia.MainLauncher</mainClass>
+                            </classPath>
+                            <jre>
+                                <!-- 显式指定运行时的 Java 寻找路径，并要求 Java 21+ -->
+                                <path>%JAVA_HOME%;%PATH%</path>
+                                <minVersion>21.0.0</minVersion>
+                                <opts>
+                                    <!-- 1. 全面开启 Direct3D 显卡硬件加速与 VRAM 显存纹理置入 -->
+                                    <opt>-Dsun.java2d.d3d=true</opt>
+                                    <opt>-Dsun.java2d.d3dtexbpp=32</opt>
+                                    <opt>-Dsun.java2d.ddforcevram=true</opt>
+                                    <opt>-Dsun.java2d.transaccel=true</opt>
+                                    <opt>-Dsun.java2d.accthreshold=0</opt>
+                                    <opt>-Dsun.java2d.noddraw=false</opt>
+
+                                    <!-- 2. Windows 平台输入法与防失焦兼容选项 -->
+                                    <opt>-Dsun.awt.disablegrab=true</opt>
+                                    <opt>-Djava.awt.im.style=on-the-spot</opt>
+
+                                    <!-- 3. 启用 Java 21 分代 ZGC (Generational ZGC)，将垃圾回收停顿彻底压至 1ms 以内 -->
+                                    <opt>-XX:+UseZGC</opt>
+                                    <opt>-XX:+ZGenerational</opt>
+                                    <opt>-Xms512m</opt>
+                                    <opt>-Xmx2048m</opt>
+
+                                    <!-- 4. 运行时显式引入 JDK 21 原生编译器模块，供动态模块插件使用 -->
+                                    <opt>--add-modules=jdk.compiler</opt>
+                                </opts>
+                            </jre>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+</project>
