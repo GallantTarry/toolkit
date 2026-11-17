@@ -328,17 +328,17 @@ public class MainLauncher extends JFrame {
                 Graphics2D gClip = (Graphics2D) g2.create();
                 gClip.clip(clipShape);
 
+                Image bgImg = getOrLoadBackdropImage();
+                if (bgImg != null) {
+                    gClip.drawImage(bgImg, 0, 0, w, h, this);
+                } else {
+                    gClip.setColor(new Color(12, 16, 26));
+                    gClip.fillRect(0, 0, w, h);
+                }
+
                 if (isFlipping && flipFromImg != null && flipToImg != null) {
-                    // 翻转期间不绘制壁纸背景：卡片自带壁纸一起翻转，卡片之外透出真实桌面
                     render3DFlip(gClip, flipFromImg, flipToImg, w, h, flipProgress, flipForward);
                 } else {
-                    Image bgImg = getOrLoadBackdropImage();
-                    if (bgImg != null) {
-                        gClip.drawImage(bgImg, 0, 0, w, h, this);
-                    } else {
-                        gClip.setColor(new Color(12, 16, 26));
-                        gClip.fillRect(0, 0, w, h);
-                    }
                     super.paint(gClip);
                 }
                 gClip.dispose();
@@ -1007,11 +1007,17 @@ public class MainLauncher extends JFrame {
         g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
         g2.setRenderingHint(RenderingHints.KEY_ALPHA_INTERPOLATION, RenderingHints.VALUE_ALPHA_INTERPOLATION_QUALITY);
 
-        // 卡片截图包含自身壁纸，并裁剪为与窗口内框一致的圆角，使翻转时卡片之外是桌面背景
-        g2.clip(new RoundRectangle2D.Double(0, 0, w, h, INNER_ARC, INNER_ARC));
         for (Component c : mainContainer.getComponents()) {
             if (c.isVisible()) {
-                c.paint(g2);
+                if (c instanceof BackgroundPanel && paintChildrenMethod != null) {
+                    try {
+                        paintChildrenMethod.invoke(c, g2);
+                    } catch (Exception ex) {
+                        c.paint(g2);
+                    }
+                } else {
+                    c.paint(g2);
+                }
             }
         }
 
